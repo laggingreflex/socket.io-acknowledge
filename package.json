@@ -1,6 +1,6 @@
 {
   "name": "socket.io-acknowledge",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Acknowledge socket.io emits",
   "main": "index.js",
   "repository": "laggingreflex/socket.io-acknowledge",
