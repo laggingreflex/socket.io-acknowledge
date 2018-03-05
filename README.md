@@ -1,6 +1,21 @@
 # socket.io-acknowledge
 
-Acknowledge API for Socket.io
+Adds acknowledgement functions to `socket.emit` and makes it return a promise which resolves/rejects based on what its corresponding `socket.on` handler function returns or throws:
+
+* **`client`**
+
+  ```js
+  const value = await socket.emit('example', 123)
+  ```
+
+* **`server`**
+
+  ```js
+  socket.on('example', async data => {
+    return await 'value'
+  })
+  ```
+
 
 ## Install
 
@@ -14,10 +29,10 @@ npm i socket.io-acknowledge
 
 ```js
 const SocketIO = require('socket.io-client')
-const Acknowledge = require('socket.io-acknowledge')
+const acknowledge = require('socket.io-acknowledge')
 
 const socket = SocketIO(SERVER_URL)
-Acknowledge.client(opts)(socket)
+acknowledge(socket)
 
 async function example() {
   try {
@@ -25,7 +40,7 @@ async function example() {
     const value = await socket.emit('example', data)
 
   } catch (error) {
-    /* socket.emit throws acknowledgement error */
+    /* or throws acknowledgement error */
     console.error(error)
   }
 }
@@ -36,20 +51,20 @@ async function example() {
 
 ```js
 const SocketIO = require('socket.io')
-const Acknowledge = require('socket.io-acknowledge')
+const acknowledge = require('socket.io-acknowledge')
 
 const io = SocketIO({})
-io.use(Acknowledge.server(opts))
+io.use(acknowledge)
 
 io.on('connect', socket => {
 
   /* socket.on handlers can be async */
   socket.on('example', async data => {
     if (…) {
-      /* socket.on handlers' returns get acknowledged by originating emit functions */
+      /* socket.on handler's return values acknowledged by originating emit functions */
       return value
     } else {
-      /* socket.on handlers' errors get thrown by originating emit functions */
+      /* or get thrown by originating emit functions */
       throw new Error(…)
     }
   })
