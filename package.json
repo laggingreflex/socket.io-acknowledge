@@ -1,0 +1,11 @@
+{
+  "name": "socket.io-acknowledge",
+  "version": "0.0.0",
+  "description": "Acknowledge API for Socket.io",
+  "main": "index.js",
+  "repository": "laggingreflex/socket.io-acknowledge",
+  "peerDependencies": {
+    "socket.io": "^2.0.0",
+    "socket.io-client": "^2.0.0"
+  }
+}
