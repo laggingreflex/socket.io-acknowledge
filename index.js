@@ -30,7 +30,7 @@ module.exports = (socket, next) => {
       try {
         ack(null, await handler.call(this, ...args.slice(0, -1)));
       } catch (error) {
-        ack(error);
+        ack(error.message);
       }
     } else {
       return handler(...args);
