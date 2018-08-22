@@ -5,14 +5,37 @@ module.exports = (socket, next) => {
   socket[on] = socket.on;
   socket[send] = socket.send;
 
-  socket.emit = (event, data, ack) => new Promise((o, x) => socket[emit](event, data, (err, data, ...rest) => ack ? ack(err, data, ...rest) : err ? x(err) : o(data)));
-
-  socket.on = (event, handler) => socket[on](event, async (data, ack) => {
-    try {
-      ack(null, await handler(data));
-    } catch (error) {
-      ack(error.message);
+  socket.emit = (event, ...args) => {
+    const ack = args[args.length - 1];
+    if (typeof ack === 'function') {
+      // ack callback provided; do not interfere
+      return socket[emit](event, ...args);
+    } else {
+      // attach ack callback and convert to promise
+      return new Promise((resolve, reject) => {
+        socket[emit](event, ...args, (error, data) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(data);
+          }
+        });
+      });
     }
+  }
+
+  socket.on = (event, handler) => socket[on].call(socket, event, async function(...args) {
+    const ack = args[args.length - 1];
+    if (typeof ack === 'function') {
+      try {
+        ack(null, await handler.call(this, ...args.slice(0, -1)));
+      } catch (error) {
+        ack(error);
+      }
+    } else {
+      return handler(...args);
+    }
+
   });
 
   socket.send = (data) => new Promise((o, x) => socket[send](data, (err, data) => err ? x(err) : o(data)));
