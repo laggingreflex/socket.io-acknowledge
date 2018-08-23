@@ -1,4 +1,5 @@
 const { emit, on, send } = require('./symbol');
+const reservedEvents = require('./reserved-events');
 
 module.exports = (socket, next) => {
   socket[emit] = socket.emit;
@@ -6,6 +7,8 @@ module.exports = (socket, next) => {
   socket[send] = socket.send;
 
   socket.emit = (event, ...args) => {
+    if (reservedEvents.includes(event)) return socket[emit](event, ...args);
+
     const ack = args[args.length - 1];
     if (typeof ack === 'function') {
       // ack callback provided; do not interfere
@@ -15,28 +18,31 @@ module.exports = (socket, next) => {
       return new Promise((resolve, reject) => {
         socket[emit](event, ...args, (error, data) => {
           if (error) {
-            reject(error);
+            reject(typeof error === 'string' ? new Error(error) : error);
           } else {
             resolve(data);
           }
         });
       });
     }
-  }
+  };
 
-  socket.on = (event, handler) => socket[on].call(socket, event, async function(...args) {
-    const ack = args[args.length - 1];
-    if (typeof ack === 'function') {
-      try {
-        ack(null, await handler.call(this, ...args.slice(0, -1)));
-      } catch (error) {
-        ack(error.message);
+  socket.on = (event, handler) => {
+    if (reservedEvents.includes(event)) return socket[on](event, handler);
+
+    return socket[on](event, async function(...args) {
+      const ack = args[args.length - 1];
+      if (typeof ack === 'function') {
+        try {
+          ack(null, await handler.call(this, ...args.slice(0, -1)));
+        } catch (error) {
+          ack(error.message);
+        }
+      } else {
+        return handler(...args);
       }
-    } else {
-      return handler(...args);
-    }
-
-  });
+    });
+  };
 
   socket.send = (data) => new Promise((o, x) => socket[send](data, (err, data) => err ? x(err) : o(data)));
 
